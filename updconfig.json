@@ -1,0 +1,41 @@
+{
+    "retries": 3,
+    "retry_delay": 1,
+    "delay_between_components": 0,
+    "dry_run": false,
+    "debug_mode": false,
+    "auto_restart": false,
+    "dark_mode": true,
+    "auto_health_on_start": true,
+    "notify_on_complete": false,
+    "restart_confirm_timeout": 30,
+    "min_python_version": [
+        3,
+        15
+    ],
+    "start_minimised": false,
+    "health_refresh_interval": 0,
+    "winget_source_update": true,
+    "winget_include_unknown": true,
+    "pip_skip_editable": false,
+    "window_w": 1790,
+    "window_h": 918,
+    "window_x": 108,
+    "window_y": 16,
+    "presets": {},
+    "components": {
+        "winget": true,
+        "choco": true,
+        "scoop": true,
+        "npm": false,
+        "clink": true,
+        "pip": true,
+        "oh_my_posh": true,
+        "windows_update": true,
+        "python": true,
+        "windows_store": true,
+        "windows_terminal": true,
+        "powershell": true,
+        "ps_modules": true
+    }
+}
