@@ -20,8 +20,8 @@
     "pip_skip_editable": false,
     "window_w": 1790,
     "window_h": 918,
-    "window_x": 108,
-    "window_y": 16,
+    "window_x": 71,
+    "window_y": 30,
     "presets": {},
     "components": {
         "winget": true,

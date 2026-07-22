@@ -34,7 +34,7 @@ except ImportError:
 
 # Use a distinct app version scheme (v-prefix) so it can't be visually
 # confused with Python version strings (e.g. "Python 3.9.7") in log output.
-VERSION = "v3.21.6"
+VERSION = "v3.21.12"
 
 _BASE_DIR   = os.path.dirname(os.path.abspath(__file__))
 CONFIG_FILE = os.path.join(_BASE_DIR, "updconfig.json")
@@ -4558,9 +4558,6 @@ class UpdaterGUI:
         _dim  = t["tag_debug"]
         _brd  = t["border"]
         _sec  = t["section_bg"]
-        _acc  = t["accent"]
-        _afg  = t["accent_fg"]
-
         panel = tk.Toplevel(self.root)
         panel.withdraw()
         panel.overrideredirect(True)      # no titlebar / window chrome
@@ -4579,10 +4576,8 @@ class UpdaterGUI:
                  padx=10, pady=8).pack(side="left")
         def _menu_close(_e=None):
             self._log_menu_open = False
-            try:
-                panel.destroy()
-            except tk.TclError:
-                pass
+            try: panel.destroy()
+            except tk.TclError: pass
         self._make_close_x(hdr, _menu_close, _sec, _dim, _fg)
         tk.Frame(inner, bg=_brd, height=1, bd=0).pack(fill="x")
 
@@ -4635,7 +4630,7 @@ class UpdaterGUI:
                         try: c.configure(bg=_sbg)
                         except tk.TclError: pass
                 def _click(_e):
-                    panel.destroy()
+                    _menu_close()
                     self._open_file(p)
                 for w in [r] + children:
                     w.bind("<Enter>",    _enter)
@@ -4668,7 +4663,7 @@ class UpdaterGUI:
         def _fleave(_e):
             foot.configure(bg=_sbg); lbl_folder.configure(bg=_sbg, fg=_dim)
         def _fclick(_e):
-            panel.destroy(); self._open_file(_BASE_DIR)
+            _menu_close(); self._open_file(_BASE_DIR)
         for _w in (foot, lbl_folder):
             _w.bind("<Enter>",    _fenter)
             _w.bind("<Leave>",    _fleave)
@@ -4688,11 +4683,14 @@ class UpdaterGUI:
             py = py - ph - 8    # flip above cursor if no room below
         panel.geometry(f"+{px}+{py}")
 
-        # ── Close on Escape; grab_set() makes the panel modal ──────────────
-        # Uses grab_set() — consistent with _show_log_level_panel,
-        # _show_shortcuts, and open_settings — so clicks stay inside the panel.
-        panel.bind("<Escape>", lambda _e: panel.destroy())
-        panel.grab_set()
+        # ── Close on Escape or click outside (no grab — non-modal dropdown) ──
+        # Log menu is intentionally non-modal: user can dismiss by clicking away
+        # (FocusOut) or pressing Escape. grab_set() was removed because it
+        # prevented FocusOut from firing, making the panel impossible to dismiss
+        # by clicking outside.
+        panel.bind("<Escape>", _menu_close)
+        panel.bind("<FocusOut>",
+                   lambda _e: _menu_close() if _e.widget is panel else None)
         # Note: no mousewheel binding — the log menu shows at most 4 rotated
         # log files and is always short enough to display without scrolling.
 
@@ -4751,7 +4749,7 @@ class UpdaterGUI:
 
         # ── Shortcut rows ─────────────────────────────────────────────────────
         body = tk.Frame(outer, bg=_sbg, bd=0)
-        body.pack(fill="both", expand=True, padx=12, pady=8)
+        body.pack(fill="both", expand=True, padx=20, pady=12)
         for i, (key, desc) in enumerate(_SHORTCUTS):
             tk.Label(body, text=key,
                      bg=_sbg, fg=_acc,
@@ -4767,7 +4765,7 @@ class UpdaterGUI:
         # ── Footer ────────────────────────────────────────────────────────────
         tk.Frame(outer, bg=_brd, height=1, bd=0).pack(fill="x")
         foot = tk.Frame(outer, bg=_sbg, bd=0)
-        foot.pack(fill="x", padx=12, pady=8)
+        foot.pack(fill="x", padx=20, pady=8)
         self._make_btn(foot, "Close", _close).pack(side="right")
 
         # ── Position centred over main window ─────────────────────────────────
@@ -4934,7 +4932,7 @@ class UpdaterGUI:
 
         # ── Footer ────────────────────────────────────────────────────────────
         foot = tk.Frame(outer, bg=_sbg, bd=0)
-        foot.pack(fill="x", padx=12, pady=8)
+        foot.pack(fill="x", padx=20, pady=8)
         self._make_btn(foot, "Close", _close).pack(side="right")
 
         win.update_idletasks()
@@ -5013,7 +5011,6 @@ class UpdaterGUI:
         _brd = t["border"]
         _acc = t["accent"]
         _afg = t["accent_fg"]
-        _bg  = t["bg"]
 
         if self._settings_open:
             return
@@ -5241,11 +5238,14 @@ class UpdaterGUI:
                      font=("Segoe UI", 10, "bold"), padx=10).pack(
                 side="left", pady=8)
             def _d_close(_e=None):
-                try: d.destroy()
-                except tk.TclError: pass
+                try:
+                    d.grab_release()
+                    d.destroy()
+                except tk.TclError:
+                    pass
             self._make_close_x(_d_hdr, _d_close, _sec, _dim, _fg)
             tk.Frame(_d_outer, bg=_brd, height=1, bd=0).pack(fill="x")
-            b2 = tk.Frame(_d_outer, bg=_sbg); b2.pack(padx=14, pady=10)
+            b2 = tk.Frame(_d_outer, bg=_sbg); b2.pack(padx=20, pady=12)
             tk.Label(b2, text="Name:", bg=_sbg, fg=_fg,
                      font=("Segoe UI", 9)).grid(row=0, column=0, sticky="w")
             ent = tk.Entry(b2, textvariable=nv, width=18,
@@ -5372,7 +5372,7 @@ class UpdaterGUI:
         # ── Footer ────────────────────────────────────────────────────────────
         tk.Frame(outer, bg=_brd, height=1, bd=0).pack(fill="x")
         foot = tk.Frame(outer, bg=_sbg, bd=0)
-        foot.pack(fill="x", padx=12, pady=8)
+        foot.pack(fill="x", padx=20, pady=8)
         self._make_btn(foot, "Save", _save, accent=True).pack(
             side="right", padx=(6, 0))
         self._make_btn(foot, "Cancel", _close).pack(side="right")
@@ -5484,26 +5484,27 @@ class UpdaterGUI:
             except tk.TclError:
                 pass  # already destroyed (e.g. rapid double-click)
         self._make_close_x(hdr, _mb_close, _sec, _dim, _fg)
-        tk.Frame(outer, bg=_strip, height=2, bd=0).pack(fill="x")
+        tk.Frame(outer, bg=_strip, height=3, bd=0).pack(fill="x")
 
         # Message body
         body = tk.Frame(outer, bg=t["widget_bg"], bd=0)
-        body.pack(fill="both", expand=True, padx=20, pady=14)
+        body.pack(fill="both", expand=True, padx=20, pady=12)
         tk.Label(body, text=message, bg=t["widget_bg"], fg=t["fg"],
                  font=("Segoe UI", 9), wraplength=340, justify="left"
                  ).pack(anchor="w")
 
         # Button row — nonlocal bool avoids the list-of-one closure workaround
         _result = False
-        btn_row = tk.Frame(body, bg=t["widget_bg"], bd=0)
-        btn_row.pack(pady=(12, 0), anchor="e")
+        tk.Frame(outer, bg=t["border"], height=1, bd=0).pack(fill="x")
+        btn_row = tk.Frame(outer, bg=t["widget_bg"], bd=0)
+        btn_row.pack(padx=20, pady=8, anchor="e")
         if kind == "yesno":
             def _yes():
                 nonlocal _result
                 _result = True
-                win.destroy()
-            # _no: no closure needed — win.destroy is already a bound method;
-            # _result stays False because the nonlocal is never assigned.
+                _mb_close()   # releases grab + destroys
+            # _no: _mb_close() also handles the "No" case
+            # (_result stays False — the nonlocal is never assigned).
             self._make_btn(btn_row, "Yes", _yes, accent=True
                            ).pack(side="left", padx=(0, 6))
             self._make_btn(btn_row, "No",  _mb_close
@@ -5591,7 +5592,7 @@ class UpdaterGUI:
 
         if not history:
             body = tk.Frame(outer, bg=_sbg, bd=0)
-            body.pack(fill="both", expand=True, padx=20, pady=20)
+            body.pack(fill="both", expand=True, padx=20, pady=12)
             tk.Label(body, text="No run history recorded yet.",
                      bg=_sbg, fg=_fg, font=("Segoe UI", 9)).pack()
             tk.Label(body,
@@ -5681,7 +5682,7 @@ class UpdaterGUI:
 
             tk.Frame(outer, bg=_brd, height=1, bd=0).pack(fill="x")
             btn_row = tk.Frame(outer, bg=_sbg, bd=0)
-            btn_row.pack(fill="x", padx=8, pady=(0, 8))
+            btn_row.pack(fill="x", padx=20, pady=8)
 
             def _export_hist():
                 ts  = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -5726,7 +5727,7 @@ class UpdaterGUI:
                 try:
                     with open(HIST_FILE, "w", encoding="utf-8") as f:
                         json.dump([], f)
-                    win.destroy()
+                    _hist_close()  # resets flag + releases grab
                 except OSError as e:
                     self._msgbox("error", "Clear History",
                                  f"Could not clear history:\n{e}", parent=win)
@@ -5751,8 +5752,11 @@ class UpdaterGUI:
         win.geometry(f"{_ww}x{_wh}+{_wx}+{_wy}")
         def _hist_close(_e=None):
             self._history_open = False
-            win.grab_release()
-            win.destroy()
+            try:
+                win.grab_release()
+                win.destroy()
+            except tk.TclError:
+                pass  # already destroyed (rapid double-click)
         self._make_close_x(hdr, _hist_close, _sec, _dim, _fg)
         tk.Frame(outer, bg=_brd, height=1, bd=0).pack(fill="x")
         win.bind("<Escape>", lambda _e: _hist_close())
